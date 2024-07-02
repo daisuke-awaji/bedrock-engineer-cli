@@ -62,6 +62,33 @@ export async function listFiles(dirPath = "."): Promise<string> {
   }
 }
 
+export async function tavilySearch(query: string): Promise<string> {
+  try {
+    const response = await fetch("https://api.tavily.com/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        api_key: process.env.TAVILY_API_KEY,
+        query,
+        search_depth: "advanced",
+        include_answer: true,
+        include_images: false,
+        include_raw_content: true,
+        max_results: 3,
+        include_domains: [],
+        exclude_domains: [],
+      }),
+    });
+
+    const body = await response.text();
+    return body;
+  } catch (e: any) {
+    return `Error searching: ${e.message}`;
+  }
+}
+
 export const tools: Tool[] = [
   {
     toolSpec: {
@@ -97,10 +124,10 @@ export const tools: Tool[] = [
             },
             content: {
               type: "string",
-              description: "The initial content of the file (optional)",
+              description: "The initial content of the file",
             },
           },
-          required: ["path"],
+          required: ["path", "content"],
         },
       },
     },
@@ -166,21 +193,25 @@ export const tools: Tool[] = [
       },
     },
   },
-  //   {
-  //     name: "tavilySearch",
-  //     description:
-  //       "Perform a web search using Tavily API to get up-to-date information or additional context. Use this when you need current information or feel a search could provide a better answer.",
-  //     inputSchema: {
-  //       type: "object",
-  //       properties: {
-  //         query: {
-  //           type: "string",
-  //           description: "The search query",
-  //         },
-  //       },
-  //       required: ["query"],
-  //     },
-  //   },
+  {
+    toolSpec: {
+      name: "tavilySearch",
+      description:
+        "Perform a web search using Tavily API to get up-to-date information or additional context. Use this when you need current information or feel a search could provide a better answer.",
+      inputSchema: {
+        json: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "The search query",
+            },
+          },
+          required: ["query"],
+        },
+      },
+    },
+  },
 ];
 
 export const executTool = (toolName: string | undefined, toolInput: any) => {
@@ -195,6 +226,8 @@ export const executTool = (toolName: string | undefined, toolInput: any) => {
       return readFile(toolInput["path"]);
     case "listFiles":
       return listFiles(toolInput["path"]);
+    case "tavilySearch":
+      return tavilySearch(toolInput["query"]);
     default:
       throw new Error(`Unknown tool: ${toolName}`);
   }

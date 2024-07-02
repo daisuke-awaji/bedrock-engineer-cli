@@ -7,10 +7,17 @@ import {
 } from "@aws-sdk/client-bedrock-runtime";
 import { executTool, tools } from "./tools";
 import systemPrompt from "./systemPrompt";
+import assert from "node:assert";
+import dotenv from "dotenv";
+dotenv.config();
+assert(process.env.TAVILY_API_KEY);
 
 const client = new BedrockRuntimeClient({
   region: "us-east-1",
 });
+
+// const modelId = "anthropic.claude-3-haiku-20240307-v1:0";
+const modelId = "anthropic.claude-3-sonnet-20240229-v1:0";
 
 const inferenceConfig = {
   maxTokens: 4000,
@@ -27,6 +34,17 @@ async function main() {
   try {
     while (true) {
       const userInput = await rl.question(`\nYou: `);
+
+      if (userInput.toLowerCase() === "automode") {
+        const userInput = await rl.question(`\nYou: `);
+        console.log("Okay, Start automode.");
+        console.log("Press Ctrl+C at any time to exit the automode loop.");
+        await chatWithClaude(userInput);
+        while (true) {
+          await chatWithClaude("Continue with the next step.");
+        }
+      }
+
       await chatWithClaude(userInput);
     }
   } finally {
@@ -42,7 +60,7 @@ const chatWithClaude = async (userInput: string) => {
   conversationHistory.push(msg);
 
   const command = new ConverseCommand({
-    modelId: "anthropic.claude-3-haiku-20240307-v1:0",
+    modelId,
     messages: conversationHistory.filter((msg) => msg.content !== undefined),
     system: [{ text: systemPrompt() }],
     toolConfig: { tools },
@@ -56,7 +74,7 @@ const chatWithClaude = async (userInput: string) => {
   for (const contentBlock of res.output?.message?.content ?? []) {
     if ("text" in contentBlock) {
       console.log(`Assistant: ${contentBlock?.text?.replace(/\\n/g, "\n")}`);
-      assistantResponse += contentBlock?.text;
+      assistantResponse += contentBlock?.text + "\n";
     } else if ("toolUse" in contentBlock) {
       const toolInput = contentBlock.toolUse?.input;
       const toolName = contentBlock.toolUse?.name;
@@ -92,7 +110,7 @@ const chatWithClaude = async (userInput: string) => {
 
       const toolResponse = await client.send(
         new ConverseCommand({
-          modelId: "anthropic.claude-3-haiku-20240307-v1:0",
+          modelId,
           messages: conversationHistory.filter(
             (msg) => msg.content !== undefined
           ),
@@ -111,13 +129,11 @@ const chatWithClaude = async (userInput: string) => {
     }
   }
 
-  if (assistantResponse !== "") {
-    conversationHistory.push({
-      role: "assistant",
-      content: [{ text: assistantResponse }],
-    });
-    console.log(`Assistant: ${assistantResponse.replace(/\\n/g, "\n")}`);
-  }
+  conversationHistory.push({
+    role: "assistant",
+    content: [{ text: assistantResponse }],
+  });
+  console.log(`Assistant: ${assistantResponse.replace(/\\n/g, "\n")}`);
 
   // console.log(
   //   `Conversation History: ${JSON.stringify(conversationHistory, null, 4)}`
