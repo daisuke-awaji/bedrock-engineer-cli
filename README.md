@@ -4,6 +4,14 @@ Bedrock Engineer is an interactive command-line interface (CLI) to assist with s
 
 This application is implemented in node.js based on the source code of super cool [Claude-Enginner](https://github.com/Doriandarko/claude-engineer), and supports various [Amazon Bedrock](https://aws.amazon.com/jp/bedrock/) models. It uses Bedrock's [Converse API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html).
 
+## 💻 Demo
+
+
+
+https://github.com/daisuke-awaji/bedrock-engineer/assets/20736455/b206ba1c-8f73-4021-90d3-f2ab6c5e1363
+
+
+
 ## ✨ Features
 
 - 💬 Interactive chat interface with Bedrock-3.5-Sonnet
