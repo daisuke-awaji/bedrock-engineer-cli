@@ -6,15 +6,11 @@ This application is implemented in node.js based on the source code of super coo
 
 ## 💻 Demo
 
-
-
 https://github.com/daisuke-awaji/bedrock-engineer/assets/20736455/b206ba1c-8f73-4021-90d3-f2ab6c5e1363
-
-
 
 ## ✨ Features
 
-- 💬 Interactive chat interface with Bedrock-3.5-Sonnet
+- 💬 Interactive chat interface with Anthoropic Claude 3, Mistral AI and Cohere Command R/R+.
 - 📁 File system operations (create folders, files, read/write files)
 - 🔍 Web search capabilities using Tavily API
 - 🏗️ Project structure creation and management
