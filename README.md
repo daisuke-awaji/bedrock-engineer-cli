@@ -10,7 +10,7 @@ https://github.com/daisuke-awaji/bedrock-engineer/assets/20736455/b206ba1c-8f73-
 
 ## ✨ Features
 
-- 💬 Interactive chat interface with Anthoropic Claude 3, Mistral AI and Cohere Command R/R+.
+- 💬 Interactive chat interface with Anthoropic Claude 3 models.
 - 📁 File system operations (create folders, files, read/write files)
 - 🔍 Web search capabilities using Tavily API
 - 🏗️ Project structure creation and management
@@ -22,6 +22,7 @@ TOBE implementation
 
 - 🌈 Syntax highlighting for code snippets
 - 🖼️ Vision capabilities support via drag and drop of images in the terminal
+- 🤖 Support models: Mistral AI and Cohere Command R/R+
 
 ## 🛠️ Installation
 
@@ -61,11 +62,10 @@ Automode allows Bedrock to work autonomously on complex tasks. When in automode:
 1. Bedrock sets clear, achievable goals based on your request.
 2. It works through these goals one by one, using available tools as needed.
 3. Bedrock provides regular updates on its progress.
-4. Automode continues until goals are completed or the maximum number of iterations is reached.
+4. Automode continues until goals are completed.
 
 To use automode:
 
 1. Type 'automode' when prompted for input.
 2. Provide your request when prompted.
 3. Bedrock will work autonomously, providing updates after each iteration.
-4. Automode exits when the task is completed or after reaching the maximum number of iterations.

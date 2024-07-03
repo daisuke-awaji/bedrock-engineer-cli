@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-bedrock-runtime";
 import { executTool, tools, writeToFile } from "./tools";
 import systemPrompt from "./systemPrompt";
+import chalk from "chalk";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -20,21 +21,40 @@ const client = new BedrockRuntimeClient({
   region: "us-east-1",
 });
 
-// const modelId = "anthropic.claude-3-haiku-20240307-v1:0";
-const modelId = "anthropic.claude-3-sonnet-20240229-v1:0";
+// const modelId = "anthropic.claude-3-haiku-20240307-v1:0"; // work
+const modelId = "anthropic.claude-3-sonnet-20240229-v1:0"; // work
+// const modelId = "anthropic.claude-3-opus-20240229-v1:0"
+// const modelId = "mistral.mistral-large-2402-v1:0"; // doesn't work
+// const modelId = "cohere.command-r-plus-v1:0"; // doesn't work
 
 const LOG_FILE_NAME = "command.log.json";
 
 const inferenceConfig = {
-  maxTokens: 4000,
+  maxTokens: 4096,
   temperature: 0.5,
   topP: 0.9,
 };
 
 const conversationHistory: Message[] = [];
 
+const colorlize = {
+  blue: chalk.blue,
+  orange: chalk.hex("#FFA500"), // Orange color
+  red: chalk.bold.red,
+  green: chalk.green,
+  black: chalk.black, // Black color
+};
+const log = {
+  ai: (str: string) => console.log(colorlize.blue(str)), // Blue color
+  tool: (str: string) => console.log(colorlize.orange(str)), // Orange color
+  you: (str: string) => console.log(colorlize.green(str)), // Green color
+  info: (str: string) => console.log(colorlize.black(str)), // Black color
+};
+
 async function main() {
-  console.log("Welcome to the Bedrock Enginner!");
+  log.ai("Welcome to the Bedrock Enginner! 🧙\n");
+  log.ai("Type 'automode' to enter Autonomous mode with infinite iterations.");
+
   const rl = readline.createInterface({ input, output });
 
   try {
@@ -42,10 +62,12 @@ async function main() {
       const userInput = await rl.question(`\nYou: `);
 
       if (userInput.toLowerCase() === "automode") {
-        console.log("Okay, Start automode.");
+        log.info("Okay, Start automode.");
 
         const userInput = await rl.question(`\nYou: `);
-        console.log("Press Ctrl+C at any time to exit the automode loop.");
+
+        log.info("Press Ctrl+C at any time to exit the automode loop.");
+
         await chatWithClaude(userInput);
         while (true) {
           await chatWithClaude("Continue with the next step.");
@@ -73,28 +95,24 @@ const chatWithClaude = async (userInput: string) => {
     toolConfig,
     inferenceConfig,
   });
-  // console.log(JSON.stringify(command, null, 2));
   await writeToFile(LOG_FILE_NAME, JSON.stringify(command, null, 2));
   const res = await client.send(command);
-  // console.log(`Response: ${JSON.stringify({ response: res }, null, 4)}`);
 
   // assistant message
   let assistantResponse = "";
   for (const contentBlock of res.output?.message?.content ?? []) {
     if ("text" in contentBlock) {
-      console.log(`Assistant: ${contentBlock?.text?.replace(/\\n/g, "\n")}`);
+      log.ai(`\nAssistant: ${contentBlock?.text?.replace(/\\n/g, "\n")}`);
       assistantResponse += contentBlock?.text + "\n";
     } else if ("toolUse" in contentBlock) {
       const toolInput = contentBlock.toolUse?.input;
       const toolName = contentBlock.toolUse?.name;
       const toolUseId = contentBlock.toolUse?.toolUseId;
 
-      console.log(`Tool Used: ${toolName}`);
-      console.log(`Tool Input: ${JSON.stringify(toolInput, null, 4)}`);
-
-      // execute tool
+      log.tool(`\nTool Used: ${toolName}`);
+      log.tool(`Tool Input: ${JSON.stringify(toolInput, null, 4)}`);
       const toolResult = await executTool(toolName, toolInput);
-      console.log(`Tool Result: ${toolResult}`);
+      log.tool(`Tool Result: ${toolResult}`);
 
       conversationHistory.push({
         role: "assistant",
@@ -126,7 +144,6 @@ const chatWithClaude = async (userInput: string) => {
       });
       await writeToFile(LOG_FILE_NAME, JSON.stringify(command, null, 2));
       const toolResponse = await client.send(command);
-      // console.log(`Tool Response: ${JSON.stringify(toolResponse, null, 4)}`);
 
       for (const contentBlock of toolResponse.output?.message?.content ?? []) {
         if ("text" in contentBlock) {
@@ -142,11 +159,7 @@ const chatWithClaude = async (userInput: string) => {
       { text: assistantResponse === "" ? "complete" : assistantResponse },
     ],
   });
-  console.log(`Assistant: ${assistantResponse.replace(/\\n/g, "\n")}`);
-
-  // console.log(
-  //   `Conversation History: ${JSON.stringify(conversationHistory, null, 4)}`
-  // );
+  log.ai(`\nAssistant: ${assistantResponse.replace(/\\n/g, "\n")}`);
 };
 
 main();
