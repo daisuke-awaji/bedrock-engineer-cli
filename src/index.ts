@@ -5,12 +5,12 @@ import {
   ConverseCommand,
   Message,
 } from "@aws-sdk/client-bedrock-runtime";
-import { executTool, tools } from "./tools";
+import { executTool, tools, writeToFile } from "./tools";
 import systemPrompt from "./systemPrompt";
-import assert from "node:assert";
+// import assert from "node:assert";
 import dotenv from "dotenv";
 dotenv.config();
-assert(process.env.TAVILY_API_KEY);
+// assert(process.env.TAVILY_API_KEY);
 
 const client = new BedrockRuntimeClient({
   region: "us-east-1",
@@ -18,6 +18,8 @@ const client = new BedrockRuntimeClient({
 
 // const modelId = "anthropic.claude-3-haiku-20240307-v1:0";
 const modelId = "anthropic.claude-3-sonnet-20240229-v1:0";
+
+const LOG_FILE_NAME = "command.log.json";
 
 const inferenceConfig = {
   maxTokens: 4000,
@@ -28,7 +30,7 @@ const inferenceConfig = {
 const conversationHistory: Message[] = [];
 
 async function main() {
-  console.log("Welcome to the Bedrock Claude Enginner!");
+  console.log("Welcome to the Bedrock Enginner!");
   const rl = readline.createInterface({ input, output });
 
   try {
@@ -36,8 +38,9 @@ async function main() {
       const userInput = await rl.question(`\nYou: `);
 
       if (userInput.toLowerCase() === "automode") {
-        const userInput = await rl.question(`\nYou: `);
         console.log("Okay, Start automode.");
+
+        const userInput = await rl.question(`\nYou: `);
         console.log("Press Ctrl+C at any time to exit the automode loop.");
         await chatWithClaude(userInput);
         while (true) {
@@ -66,6 +69,8 @@ const chatWithClaude = async (userInput: string) => {
     toolConfig: { tools },
     inferenceConfig,
   });
+  // console.log(JSON.stringify(command, null, 2));
+  await writeToFile(LOG_FILE_NAME, JSON.stringify(command, null, 2));
   const res = await client.send(command);
   // console.log(`Response: ${JSON.stringify({ response: res }, null, 4)}`);
 
@@ -97,28 +102,26 @@ const chatWithClaude = async (userInput: string) => {
           {
             toolResult: {
               toolUseId,
-              content: [
-                {
-                  text: toolResult,
-                },
-              ],
+              content: [{ text: toolResult }],
               status: "success",
             },
           },
         ],
       });
 
-      const toolResponse = await client.send(
-        new ConverseCommand({
-          modelId,
-          messages: conversationHistory.filter(
-            (msg) => msg.content !== undefined
-          ),
-          system: [{ text: systemPrompt() }],
-          toolConfig: { tools },
-          inferenceConfig,
-        })
+      const messages = conversationHistory.filter(
+        (msg) => msg.content !== undefined
       );
+      // console.log(JSON.stringify(messages, null, 4));
+      const command = new ConverseCommand({
+        modelId,
+        messages,
+        system: [{ text: systemPrompt() }],
+        toolConfig: { tools },
+        inferenceConfig,
+      });
+      await writeToFile(LOG_FILE_NAME, JSON.stringify(command, null, 2));
+      const toolResponse = await client.send(command);
       // console.log(`Tool Response: ${JSON.stringify(toolResponse, null, 4)}`);
 
       for (const contentBlock of toolResponse.output?.message?.content ?? []) {
@@ -131,7 +134,9 @@ const chatWithClaude = async (userInput: string) => {
 
   conversationHistory.push({
     role: "assistant",
-    content: [{ text: assistantResponse }],
+    content: [
+      { text: assistantResponse === "" ? "complete" : assistantResponse },
+    ],
   });
   console.log(`Assistant: ${assistantResponse.replace(/\\n/g, "\n")}`);
 

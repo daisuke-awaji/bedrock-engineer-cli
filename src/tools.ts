@@ -64,7 +64,7 @@ export async function listFiles(dirPath = "."): Promise<string> {
 
 export async function tavilySearch(query: string): Promise<string> {
   try {
-    const response = await fetch("https://api.tavily.com/", {
+    const response = await fetch("https://api.tavily.com/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
