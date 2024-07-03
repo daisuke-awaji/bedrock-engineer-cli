@@ -42,7 +42,7 @@ TOBE implementation
    npm install
    ```
 
-3. Set up your API keys:
+3. (Optional) Set up your API keys:
 
    Add your Tavily API keys at the start of the .env file:
 
