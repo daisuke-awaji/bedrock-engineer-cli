@@ -7,11 +7,15 @@ import {
 } from "@aws-sdk/client-bedrock-runtime";
 import { executTool, tools, writeToFile } from "./tools";
 import systemPrompt from "./systemPrompt";
-// import assert from "node:assert";
 import dotenv from "dotenv";
 dotenv.config();
-// assert(process.env.TAVILY_API_KEY);
 
+const isSetTaihvilyApiKey = !!process.env.TAVILY_API_KEY;
+const toolConfig = {
+  tools: isSetTaihvilyApiKey
+    ? tools
+    : tools.filter((value) => value.toolSpec?.name !== "tavilySearch"),
+};
 const client = new BedrockRuntimeClient({
   region: "us-east-1",
 });
@@ -65,8 +69,8 @@ const chatWithClaude = async (userInput: string) => {
   const command = new ConverseCommand({
     modelId,
     messages: conversationHistory.filter((msg) => msg.content !== undefined),
-    system: [{ text: systemPrompt() }],
-    toolConfig: { tools },
+    system: [{ text: systemPrompt(isSetTaihvilyApiKey) }],
+    toolConfig,
     inferenceConfig,
   });
   // console.log(JSON.stringify(command, null, 2));
@@ -116,8 +120,8 @@ const chatWithClaude = async (userInput: string) => {
       const command = new ConverseCommand({
         modelId,
         messages,
-        system: [{ text: systemPrompt() }],
-        toolConfig: { tools },
+        system: [{ text: systemPrompt(isSetTaihvilyApiKey) }],
+        toolConfig,
         inferenceConfig,
       });
       await writeToFile(LOG_FILE_NAME, JSON.stringify(command, null, 2));
