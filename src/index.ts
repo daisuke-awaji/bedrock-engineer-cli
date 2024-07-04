@@ -5,10 +5,10 @@ import {
   ConverseCommand,
   Message,
 } from "@aws-sdk/client-bedrock-runtime";
-import { executTool, tools, writeToFile } from "./tools";
+import { executTool, tools } from "./tools";
 import systemPrompt from "./systemPrompt";
-import chalk from "chalk";
 import dotenv from "dotenv";
+import { log } from "./log";
 dotenv.config();
 
 const isSetTaihvilyApiKey = !!process.env.TAVILY_API_KEY;
@@ -24,10 +24,9 @@ const client = new BedrockRuntimeClient({
 // const modelId = "anthropic.claude-3-haiku-20240307-v1:0"; // work
 const modelId = "anthropic.claude-3-sonnet-20240229-v1:0"; // work
 // const modelId = "anthropic.claude-3-opus-20240229-v1:0"
+// const modelId = "anthropic.claude-3-5-sonnet-20240620-v1:0";
 // const modelId = "mistral.mistral-large-2402-v1:0"; // doesn't work
 // const modelId = "cohere.command-r-plus-v1:0"; // doesn't work
-
-const LOG_FILE_NAME = "command.log.json";
 
 const inferenceConfig = {
   maxTokens: 4096,
@@ -36,20 +35,6 @@ const inferenceConfig = {
 };
 
 const conversationHistory: Message[] = [];
-
-const colorlize = {
-  blue: chalk.blue,
-  orange: chalk.hex("#FFA500"), // Orange color
-  red: chalk.bold.red,
-  green: chalk.green,
-  black: chalk.black, // Black color
-};
-const log = {
-  ai: (str: string) => console.log(colorlize.blue(str)), // Blue color
-  tool: (str: string) => console.log(colorlize.orange(str)), // Orange color
-  you: (str: string) => console.log(colorlize.green(str)), // Green color
-  info: (str: string) => console.log(colorlize.black(str)), // Black color
-};
 
 async function main() {
   log.ai("Welcome to the Bedrock Enginner! 🧙\n");
@@ -70,7 +55,13 @@ async function main() {
 
         await chatWithClaude(userInput);
         while (true) {
-          await chatWithClaude("Continue with the next step.");
+          const assistantResponse = await chatWithClaude(
+            "Continue with the next step."
+          );
+          if (assistantResponse.includes("AUTOMODE_COMPLETE")) {
+            log.info("Automode completed.");
+            break;
+          }
         }
       }
 
@@ -95,7 +86,7 @@ const chatWithClaude = async (userInput: string) => {
     toolConfig,
     inferenceConfig,
   });
-  await writeToFile(LOG_FILE_NAME, JSON.stringify(command, null, 2));
+  await log.write(command);
   const res = await client.send(command);
 
   // assistant message
@@ -142,7 +133,7 @@ const chatWithClaude = async (userInput: string) => {
         toolConfig,
         inferenceConfig,
       });
-      await writeToFile(LOG_FILE_NAME, JSON.stringify(command, null, 2));
+      await log.write(command);
       const toolResponse = await client.send(command);
 
       for (const contentBlock of toolResponse.output?.message?.content ?? []) {
@@ -160,6 +151,8 @@ const chatWithClaude = async (userInput: string) => {
     ],
   });
   log.ai(`\nAssistant: ${assistantResponse.replace(/\\n/g, "\n")}`);
+
+  return assistantResponse;
 };
 
 main();
