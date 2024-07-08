@@ -1,14 +1,114 @@
 import * as fs from "fs/promises";
-import * as path from "path";
-import { Tool, ToolSpecification } from "@aws-sdk/client-bedrock-runtime";
+import { Tool } from "@aws-sdk/client-bedrock-runtime";
+import {
+  CloudFormationClient,
+  CreateStackCommand,
+  DescribeStackEventsCommand,
+  DescribeStacksCommand,
+  ListStacksCommand,
+  Parameter,
+  StackStatus,
+  UpdateStackCommand,
+} from "@aws-sdk/client-cloudformation";
 
-const CLAUDE_COLOR = "\x1b[36m";
-const Style = {
-  RESET_ALL: "\x1b[0m",
-};
+const client = new CloudFormationClient({
+  region: "us-east-1",
+});
 
-export function printColored(text: string, color: string): void {
-  console.log(`${color}${text}${Style.RESET_ALL}`);
+export async function createStack(
+  template: string,
+  stackName: string,
+  parameters?: Parameter[]
+): Promise<string> {
+  try {
+    const cmd = new CreateStackCommand({
+      TemplateBody: template,
+      StackName: stackName,
+      Parameters: parameters,
+      Capabilities: [
+        "CAPABILITY_IAM",
+        "CAPABILITY_NAMED_IAM",
+        "CAPABILITY_AUTO_EXPAND",
+      ],
+      OnFailure: "DELETE",
+      Tags: [
+        {
+          Key: "project",
+          Value: "bedrock-engineer",
+        },
+      ],
+    });
+    const res = await client.send(cmd);
+    return `Stack created: ${stackName}, StackId: ${res.StackId}`;
+  } catch (e) {
+    return `Error createStack: ${JSON.stringify(e)}`;
+  }
+}
+
+export async function describeStack(stackName: string): Promise<string> {
+  try {
+    const cmd = new DescribeStacksCommand({
+      StackName: stackName,
+    });
+    const res = await client.send(cmd);
+    const stack = res?.Stacks ? res.Stacks[0] : undefined;
+    return JSON.stringify(stack);
+  } catch (e) {
+    return `Error describeStack: ${JSON.stringify(e)}`;
+  }
+}
+
+export async function listStacks(stackStatus: string[]): Promise<string> {
+  try {
+    const cmd = new ListStacksCommand({
+      StackStatusFilter: stackStatus as StackStatus[],
+    });
+    const res = await client.send(cmd);
+    return JSON.stringify(res.StackSummaries);
+  } catch (e) {
+    return `Error listStacks: ${JSON.stringify(e)}`;
+  }
+}
+
+export async function describeStackEvents(stackName: string): Promise<string> {
+  try {
+    const cmd = new DescribeStackEventsCommand({
+      StackName: stackName,
+    });
+    const res = await client.send(cmd);
+    return JSON.stringify(res.StackEvents);
+  } catch (e) {
+    return `Error describeStackEvents: ${JSON.stringify(e)}`;
+  }
+}
+
+export async function updateStack(
+  template: string,
+  stackName: string,
+  parameters?: Parameter[]
+): Promise<string> {
+  try {
+    const cmd = new UpdateStackCommand({
+      TemplateBody: template,
+      StackName: stackName,
+      Parameters: parameters,
+      Capabilities: [
+        "CAPABILITY_IAM",
+        "CAPABILITY_NAMED_IAM",
+        "CAPABILITY_AUTO_EXPAND",
+      ],
+      Tags: [
+        {
+          Key: "project",
+          Value: "bedrock-engineer",
+        },
+      ],
+    });
+    const res = await client.send(cmd);
+    return `Stack updated: ${stackName}, StackId: ${res.StackId}`;
+  } catch (e) {
+    return `Error updateStack: ${JSON.stringify(e)}`;
+  }
 }
 
 export async function createFolder(folderPath: string): Promise<string> {
@@ -88,6 +188,44 @@ export async function tavilySearch(query: string): Promise<string> {
     return `Error searching: ${e.message}`;
   }
 }
+
+export async function fetchAPI(
+  url: string,
+  options?: RequestInit
+): Promise<string> {
+  try {
+    const res = options ? await fetch(url, options) : await fetch(url);
+    return JSON.stringify(res);
+  } catch (e: any) {
+    return `Error fetchAPI: ${e.message}`;
+  }
+}
+
+const STACK_STATUS = [
+  "CREATE_IN_PROGRESS",
+  "CREATE_FAILED",
+  "CREATE_COMPLETE",
+  "ROLLBACK_IN_PROGRESS",
+  "ROLLBACK_FAILED",
+  "ROLLBACK_COMPLETE",
+  "DELETE_IN_PROGRESS",
+  "DELETE_FAILED",
+  "DELETE_COMPLETE",
+  "UPDATE_IN_PROGRESS",
+  "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
+  "UPDATE_COMPLETE",
+  "UPDATE_FAILED",
+  "UPDATE_ROLLBACK_IN_PROGRESS",
+  "UPDATE_ROLLBACK_FAILED",
+  "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
+  "UPDATE_ROLLBACK_COMPLETE",
+  "REVIEW_IN_PROGRESS",
+  "IMPORT_IN_PROGRESS",
+  "IMPORT_COMPLETE",
+  "IMPORT_ROLLBACK_IN_PROGRESS",
+  "IMPORT_ROLLBACK_FAILED",
+  "IMPORT_ROLLBACK_COMPLETE",
+];
 
 export const tools: Tool[] = [
   {
@@ -212,6 +350,178 @@ export const tools: Tool[] = [
       },
     },
   },
+  {
+    toolSpec: {
+      name: "createStack",
+      description:
+        "Create a CloudFormation stack with the specified template and stack name.",
+      inputSchema: {
+        json: {
+          type: "object",
+          properties: {
+            template: {
+              type: "string",
+              description: "The AWS CloudFormation template",
+            },
+            stackName: {
+              type: "string",
+              description: "The AWS CloudFormation Stack Name",
+            },
+            parameters: {
+              type: "array",
+              description: `The AWS CloudFormation Stack Parameters
+A list of <code>Parameter</code> structures that specify input parameters for the stack. 
+For more information, see the "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_Parameter.html" data type.</p>
+`,
+              items: {
+                type: "object",
+                properties: {
+                  ParameterKey: {
+                    type: "string",
+                    description: "The key of the parameter",
+                  },
+                  ParameterValue: {
+                    type: "string",
+                    description: "The value of the parameter",
+                  },
+                },
+              },
+            },
+          },
+          required: ["template", "stackName"],
+        },
+      },
+    },
+  },
+  {
+    toolSpec: {
+      name: "updateStack",
+      description:
+        "Update a CloudFormation stack with the specified template and stack name.",
+      inputSchema: {
+        json: {
+          type: "object",
+          properties: {
+            template: {
+              type: "string",
+              description: "The AWS CloudFormation template",
+            },
+            stackName: {
+              type: "string",
+              description: "The AWS CloudFormation Stack Name",
+            },
+            parameters: {
+              type: "array",
+              description: `The AWS CloudFormation Stack Parameters
+A list of <code>Parameter</code> structures that specify input parameters for the stack. 
+For more information, see the "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_Parameter.html" data type.</p>
+`,
+              items: {
+                type: "object",
+                properties: {
+                  ParameterKey: {
+                    type: "string",
+                    description: "The key of the parameter",
+                  },
+                  ParameterValue: {
+                    type: "string",
+                    description: "The value of the parameter",
+                  },
+                },
+              },
+            },
+          },
+          required: ["template", "stackName"],
+        },
+      },
+    },
+  },
+  {
+    toolSpec: {
+      name: "describeStack",
+      description: "Describe a CloudFormation stack by stack name",
+      inputSchema: {
+        json: {
+          type: "object",
+          properties: {
+            stackName: {
+              type: "string",
+              description: `The AWS CloudFormation Stack Name or Stack ID. The name or the unique stack ID that's associated with the stack, which aren't always interchangeable
+Running stacks: You can specify either the stack's name or its unique stack ID.
+Deleted stacks: You must specify the unique stack ID.
+`,
+            },
+          },
+          required: ["stackName"],
+        },
+      },
+    },
+  },
+  {
+    toolSpec: {
+      name: "listStacks",
+      description: "List CloudFormation stacks with the specified status",
+      inputSchema: {
+        json: {
+          type: "object",
+          properties: {
+            stackStatus: {
+              type: "array",
+              description: "The AWS CloudFormation Stack Status Array",
+              items: {
+                type: "string",
+                enum: STACK_STATUS,
+                description: "The AWS CloudFormation Stack Status",
+              },
+            },
+          },
+          required: ["stackStatus"],
+        },
+      },
+    },
+  },
+  {
+    toolSpec: {
+      name: "describeStackEvents",
+      description: "Describe a CloudFormation stack events by stack name",
+      inputSchema: {
+        json: {
+          type: "object",
+          properties: {
+            stackName: {
+              type: "string",
+              description: "The AWS CloudFormation Stack Name",
+            },
+          },
+          required: ["stackName"],
+        },
+      },
+    },
+  },
+  {
+    toolSpec: {
+      name: "fetchAPI",
+      description:
+        "Fetch data from a specified API endpoint. Use this when you need to retrieve data from a third-party API.",
+      inputSchema: {
+        json: {
+          type: "object",
+          properties: {
+            url: {
+              type: "string",
+              description: "The URL of the API endpoint",
+            },
+            options: {
+              type: "object",
+              description:
+                "The options for the fetch request. This specifies the Node.js fetch api's second argument 'RequestInit' ",
+            },
+          },
+          required: ["url"],
+        },
+      },
+    },
+  },
 ];
 
 export const executTool = (toolName: string | undefined, toolInput: any) => {
@@ -228,6 +538,20 @@ export const executTool = (toolName: string | undefined, toolInput: any) => {
       return listFiles(toolInput["path"]);
     case "tavilySearch":
       return tavilySearch(toolInput["query"]);
+    case "createStack":
+      return createStack(
+        toolInput["template"],
+        toolInput["stackName"],
+        toolInput["parameters"]
+      );
+    case "describeStack":
+      return describeStack(toolInput["stackName"]);
+    case "listStacks":
+      return listStacks(toolInput["stackStatus"]);
+    case "describeStackEvents":
+      return describeStackEvents(toolInput["stackName"]);
+    case "fetchAPI":
+      return fetchAPI(toolInput["url"], toolInput["options"]);
     default:
       throw new Error(`Unknown tool: ${toolName}`);
   }

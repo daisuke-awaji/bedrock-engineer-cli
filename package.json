@@ -1,6 +1,6 @@
 {
   "name": "bedrock-engineer",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "main": "index.js",
   "bin": {
     "bedrock-engineer": "dist/src/index.js"
@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.606.0",
+    "@aws-sdk/client-cloudformation": "^3.609.0",
+    "aws-sdk": "^2.1655.0",
     "chalk": "4.1.2",
     "dotenv": "^16.4.5"
   }

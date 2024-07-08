@@ -53,11 +53,12 @@ async function main() {
 
         log.info("Press Ctrl+C at any time to exit the automode loop.");
 
-        await chatWithClaude(userInput);
+        await chatWithClaude({ userInput });
         while (true) {
-          const assistantResponse = await chatWithClaude(
-            "Continue with the next step."
-          );
+          const assistantResponse = await chatWithClaude({
+            userInput: "Continue with the next step.",
+            automode: true,
+          });
           if (assistantResponse.includes("AUTOMODE_COMPLETE")) {
             log.info("Automode completed.");
             break;
@@ -65,14 +66,19 @@ async function main() {
         }
       }
 
-      await chatWithClaude(userInput);
+      await chatWithClaude({ userInput });
     }
   } finally {
     rl.close();
   }
 }
 
-const chatWithClaude = async (userInput: string) => {
+type ChatWithClaudeProps = {
+  userInput: string;
+  automode?: boolean;
+};
+const chatWithClaude = async (props: ChatWithClaudeProps) => {
+  const { userInput, automode } = props;
   const msg: Message = {
     role: "user",
     content: [{ text: userInput }],
@@ -82,7 +88,7 @@ const chatWithClaude = async (userInput: string) => {
   const command = new ConverseCommand({
     modelId,
     messages: conversationHistory.filter((msg) => msg.content !== undefined),
-    system: [{ text: systemPrompt(isSetTaihvilyApiKey) }],
+    system: [{ text: systemPrompt(isSetTaihvilyApiKey, automode) }],
     toolConfig,
     inferenceConfig,
   });
@@ -129,7 +135,7 @@ const chatWithClaude = async (userInput: string) => {
       const command = new ConverseCommand({
         modelId,
         messages,
-        system: [{ text: systemPrompt(isSetTaihvilyApiKey) }],
+        system: [{ text: systemPrompt(isSetTaihvilyApiKey, automode) }],
         toolConfig,
         inferenceConfig,
       });

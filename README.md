@@ -1,6 +1,6 @@
 # 🧙 Bedrock Engineer
 
-Bedrock Engineer is an interactive command-line interface (CLI) to assist with software development tasks. This tool combines the capabilities of a large language model with practical file system operations and web search functionality.
+Bedrock Engineer is an interactive command-line interface (CLI) to assist with software development tasks. This tool combines the capabilities of a large language model with practical file system operations, web search functionality and build/deploy features of AWS cloud resources.
 
 This application is implemented in node.js based on the source code of super cool [Claude-Enginner](https://github.com/Doriandarko/claude-engineer), and supports various [Amazon Bedrock](https://aws.amazon.com/jp/bedrock/) models. It uses Bedrock's [Converse API](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html).
 
@@ -17,6 +17,7 @@ https://github.com/daisuke-awaji/bedrock-engineer/assets/20736455/b206ba1c-8f73-
 - 🧐 Code analysis and improvement suggestions
 - 🚀 Automode for autonomous task completion
 - 🔄 Iteration tracking in automode
+- ☁️ Build and deploy application and infrastructure to AWS Cloud
 
 TOBE implementation
 
