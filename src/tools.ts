@@ -197,8 +197,9 @@ export async function fetchAPI(
   options?: RequestInit
 ): Promise<string> {
   try {
-    const res = options ? await fetch(url, options) : await fetch(url);
-    return JSON.stringify(res);
+    const res = await fetch(url, options);
+    const json = await res.json();
+    return JSON.stringify(json);
   } catch (e: any) {
     return `Error fetchAPI: ${e.message}`;
   }
@@ -209,7 +210,7 @@ export async function execCmd(cmd: string): Promise<string> {
     const res = await promiseExec(cmd);
     return JSON.stringify(res);
   } catch (e: any) {
-    return `Error execCmd: ${e.message}`;
+    return `Error execCmd: ${JSON.stringify(e)}`;
   }
 }
 

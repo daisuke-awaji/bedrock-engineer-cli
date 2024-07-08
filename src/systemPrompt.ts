@@ -33,13 +33,10 @@ When asked to make edits or improvements:
 
 When deploy to aws cloud:
 - First, create aws cloudformation template in project directory
-- Then, use the createStack tool to deploy the cloudformation template to aws. 
+- Then, exec command "cfn-lint -t <template.yaml>" by using execCmd tool to check template linter error.
+- If template has no error, use the createStack tool to deploy the cloudformation template to aws. 
   - IMPORTANT RULe!! Don't use AWS SAM Template or Don't write Transform: AWS::Serverless-2016-10-31.
 - If the stack creation fails, call the createStack tool again with a different stack name to create the stack.
-
-When exec cli command:
-- If you want to start a process that listens to a specific port, such as react-scripts start, run it in the background.
-- You can run it in the background by adding & to the end of the shell script command.
 
 Be sure to consider the type of project (e.g., Python, JavaScript, web application) when determining the appropriate structure and files to include.
 
