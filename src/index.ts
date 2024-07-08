@@ -59,6 +59,7 @@ async function main() {
             userInput: "Continue with the next step.",
             automode: true,
           });
+
           if (assistantResponse.includes("AUTOMODE_COMPLETE")) {
             log.info("Automode completed.");
             break;
@@ -108,6 +109,23 @@ const chatWithClaude = async (props: ChatWithClaudeProps) => {
 
       log.tool(`\nTool Used: ${toolName}`);
       log.tool(`Tool Input: ${JSON.stringify(toolInput, null, 4)}`);
+      if (toolName === "execCmd") {
+        // approved by human in cli input
+        const rl = readline.createInterface({ input, output });
+        try {
+          log.warn(
+            `\nDo you want to execute the command?\nIf you want to execute the command, just press <Enter>.\nIf you don't want to execute the command, enter "cancel" or a string of one or more characters.`
+          );
+          const userInput = await rl.question(`\nYou: `);
+          rl.close();
+          if (userInput.length > 0) {
+            log.info("Okay, I'll not execute the command.");
+            break;
+          }
+        } finally {
+          rl.close();
+        }
+      }
       const toolResult = await executTool(toolName, toolInput);
       log.tool(`Tool Result: ${toolResult}`);
 

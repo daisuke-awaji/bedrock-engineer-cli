@@ -14,6 +14,7 @@ export const log = {
   tool: (str: string) => console.log(colorlize.orange(str)), // Orange color
   you: (str: string) => console.log(colorlize.green(str)), // Green color
   info: (str: string) => console.log(colorlize.black(str)), // Black color
+  warn: (str: string) => console.log(colorlize.red(str)), // Red color
   write: (obj: any) => {
     return writeToFile(LOG_FILE_NAME, JSON.stringify(obj, null, 2));
   },

@@ -10,6 +10,9 @@ import {
   StackStatus,
   UpdateStackCommand,
 } from "@aws-sdk/client-cloudformation";
+import { promisify } from "util";
+import { exec } from "child_process";
+const promiseExec = promisify(exec);
 
 const client = new CloudFormationClient({
   region: "us-east-1",
@@ -198,6 +201,15 @@ export async function fetchAPI(
     return JSON.stringify(res);
   } catch (e: any) {
     return `Error fetchAPI: ${e.message}`;
+  }
+}
+
+export async function execCmd(cmd: string): Promise<string> {
+  try {
+    const res = await promiseExec(cmd);
+    return JSON.stringify(res);
+  } catch (e: any) {
+    return `Error execCmd: ${e.message}`;
   }
 }
 
@@ -522,6 +534,25 @@ Deleted stacks: You must specify the unique stack ID.
       },
     },
   },
+  {
+    toolSpec: {
+      name: "execCmd",
+      description:
+        "Execute a command in the terminal. Use this when you need to run a command in your terminal.",
+      inputSchema: {
+        json: {
+          type: "object",
+          properties: {
+            cmd: {
+              type: "string",
+              description: "The command to execute",
+            },
+          },
+          required: ["cmd"],
+        },
+      },
+    },
+  },
 ];
 
 export const executTool = (toolName: string | undefined, toolInput: any) => {
@@ -550,8 +581,16 @@ export const executTool = (toolName: string | undefined, toolInput: any) => {
       return listStacks(toolInput["stackStatus"]);
     case "describeStackEvents":
       return describeStackEvents(toolInput["stackName"]);
+    case "updateStack":
+      return updateStack(
+        toolInput["template"],
+        toolInput["stackName"],
+        toolInput["parameters"]
+      );
     case "fetchAPI":
       return fetchAPI(toolInput["url"], toolInput["options"]);
+    case "execCmd":
+      return execCmd(toolInput["cmd"]);
     default:
       throw new Error(`Unknown tool: ${toolName}`);
   }
