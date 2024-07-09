@@ -71,3 +71,7 @@ To use automode:
 1. Type 'automode' when prompted for input.
 2. Provide your request when prompted.
 3. Bedrock will work autonomously, providing updates after each iteration.
+
+## Star history
+
+[![Star History Chart](https://api.star-history.com/svg?repos=daisuke-awaji/bedrock-engineer&type=Date)](https://star-history.com/#daisuke-awaji/bedrock-engineer&Date)
