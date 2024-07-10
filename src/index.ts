@@ -1,17 +1,19 @@
-import { stdin as input, stdout as output, exit } from "node:process";
+import { stdin as input, stdout as output } from "node:process";
 import * as readline from "node:readline/promises";
 import {
   BedrockRuntimeClient,
   ConverseCommand,
   Message,
 } from "@aws-sdk/client-bedrock-runtime";
-import { executTool, tools } from "./tools";
+import { executTool, tools } from "./tools/tools";
 import systemPrompt from "./systemPrompt";
 import dotenv from "dotenv";
 import { log } from "./log";
 dotenv.config();
 
 const isSetTaihvilyApiKey = !!process.env.TAVILY_API_KEY;
+const s3BucketNameForSamPackage = process.env.S3_BUCKET_NAME_FOR_SAM_PACKAGE;
+
 const toolConfig = {
   tools: isSetTaihvilyApiKey
     ? tools
@@ -20,6 +22,9 @@ const toolConfig = {
 const client = new BedrockRuntimeClient({
   region: "us-east-1",
 });
+
+log.info("TAI: " + process.env.TAVILY_API_KEY);
+log.info("S3: " + s3BucketNameForSamPackage);
 
 // const modelId = "anthropic.claude-3-haiku-20240307-v1:0"; // work
 const modelId = "anthropic.claude-3-sonnet-20240229-v1:0"; // work
@@ -52,10 +57,6 @@ async function main() {
       }
 
       if (userInput.toLowerCase() === "automode") {
-        await automodeLoop();
-      }
-
-      if (userInput.toLowerCase() === "omega") {
         await automodeLoop({ cmdRequireConfirm: false });
       }
 
@@ -107,7 +108,15 @@ const chatWithClaude = async (props: ChatWithClaudeProps) => {
   const command = new ConverseCommand({
     modelId,
     messages: conversationHistory.filter((msg) => msg.content !== undefined),
-    system: [{ text: systemPrompt(isSetTaihvilyApiKey, automode) }],
+    system: [
+      {
+        text: systemPrompt({
+          useTavilySearch: isSetTaihvilyApiKey,
+          automode,
+          s3BucketNameForSamPackage,
+        }),
+      },
+    ],
     toolConfig,
     inferenceConfig,
   });
@@ -166,7 +175,15 @@ const chatWithClaude = async (props: ChatWithClaudeProps) => {
       const command = new ConverseCommand({
         modelId,
         messages,
-        system: [{ text: systemPrompt(isSetTaihvilyApiKey, automode) }],
+        system: [
+          {
+            text: systemPrompt({
+              useTavilySearch: isSetTaihvilyApiKey,
+              automode,
+              s3BucketNameForSamPackage,
+            }),
+          },
+        ],
         toolConfig,
         inferenceConfig,
       });

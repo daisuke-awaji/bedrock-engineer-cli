@@ -10,13 +10,14 @@ import {
   StackStatus,
   UpdateStackCommand,
 } from "@aws-sdk/client-cloudformation";
+// import { CloudWatchLogsClient } from "@aws-sdk/client-cloudwatch-logs";
 import { promisify } from "util";
 import { exec } from "child_process";
 const promiseExec = promisify(exec);
 
-const client = new CloudFormationClient({
-  region: "us-east-1",
-});
+const region = "us-east-1";
+const cfn = new CloudFormationClient({ region });
+// const cloudwatch = new CloudWatchLogsClient({ region });
 
 export async function createStack(
   template: string,
@@ -41,7 +42,7 @@ export async function createStack(
         },
       ],
     });
-    const res = await client.send(cmd);
+    const res = await cfn.send(cmd);
     return `Stack created: ${stackName}, StackId: ${res.StackId}`;
   } catch (e) {
     return `Error createStack: ${JSON.stringify(e)}`;
@@ -53,7 +54,7 @@ export async function describeStack(stackName: string): Promise<string> {
     const cmd = new DescribeStacksCommand({
       StackName: stackName,
     });
-    const res = await client.send(cmd);
+    const res = await cfn.send(cmd);
     const stack = res?.Stacks ? res.Stacks[0] : undefined;
     return JSON.stringify(stack);
   } catch (e) {
@@ -66,7 +67,7 @@ export async function listStacks(stackStatus: string[]): Promise<string> {
     const cmd = new ListStacksCommand({
       StackStatusFilter: stackStatus as StackStatus[],
     });
-    const res = await client.send(cmd);
+    const res = await cfn.send(cmd);
     return JSON.stringify(res.StackSummaries);
   } catch (e) {
     return `Error listStacks: ${JSON.stringify(e)}`;
@@ -78,7 +79,7 @@ export async function describeStackEvents(stackName: string): Promise<string> {
     const cmd = new DescribeStackEventsCommand({
       StackName: stackName,
     });
-    const res = await client.send(cmd);
+    const res = await cfn.send(cmd);
     return JSON.stringify(res.StackEvents);
   } catch (e) {
     return `Error describeStackEvents: ${JSON.stringify(e)}`;
@@ -107,7 +108,7 @@ export async function updateStack(
         },
       ],
     });
-    const res = await client.send(cmd);
+    const res = await cfn.send(cmd);
     return `Stack updated: ${stackName}, StackId: ${res.StackId}`;
   } catch (e) {
     return `Error updateStack: ${JSON.stringify(e)}`;
@@ -201,7 +202,7 @@ export async function fetchAPI(
     const json = await res.json();
     return JSON.stringify(json);
   } catch (e: any) {
-    return `Error fetchAPI: ${e.message}`;
+    return `Error fetchAPI: ${JSON.stringify(e)}`;
   }
 }
 
@@ -374,7 +375,8 @@ export const tools: Tool[] = [
           properties: {
             template: {
               type: "string",
-              description: "The AWS CloudFormation template",
+              description:
+                "The AWS CloudFormation template body. Structure containing the template body with a minimum length of 1 byte and a maximum length of 51,200 bytes. For more information, go to Template anatomy in the CloudFormation User Guide .",
             },
             stackName: {
               type: "string",
@@ -503,7 +505,8 @@ Deleted stacks: You must specify the unique stack ID.
           properties: {
             stackName: {
               type: "string",
-              description: "The AWS CloudFormation Stack Name",
+              description:
+                "The unique stack ID (arn) e.g. arn:aws:cloudformation:us-east-1:000000000000:stack/my-stack/731f00f6",
             },
           },
           required: ["stackName"],

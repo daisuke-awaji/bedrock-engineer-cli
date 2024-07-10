@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { writeToFile } from "./tools";
+import { writeToFile } from "./tools/tools";
 
 export const LOG_FILE_NAME = "command.log.json";
 const colorlize = {
