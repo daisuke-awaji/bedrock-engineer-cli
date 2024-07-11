@@ -4,6 +4,7 @@ import {
   BedrockRuntimeClient,
   ConverseCommand,
   Message,
+  Tool,
 } from "@aws-sdk/client-bedrock-runtime";
 import { executTool, tools } from "./tools/tools";
 import systemPrompt from "./systemPrompt";
@@ -13,18 +14,24 @@ dotenv.config();
 
 const isSetTaihvilyApiKey = !!process.env.TAVILY_API_KEY;
 const s3BucketNameForSamPackage = process.env.S3_BUCKET_NAME_FOR_SAM_PACKAGE;
+const isSetPexelsApiKey = !!process.env.PEXELS_API_KEY;
 
 const toolConfig = {
-  tools: isSetTaihvilyApiKey
-    ? tools
-    : tools.filter((value) => value.toolSpec?.name !== "tavilySearch"),
+  tools: tools.filter((value) => {
+    if (value.toolSpec?.name === "tavilySearch") {
+      return isSetTaihvilyApiKey;
+    } else if (value.toolSpec?.name === "pexelsSearch") {
+      return isSetPexelsApiKey;
+    }
+    return true;
+  }),
 };
+
+log.info(JSON.stringify(toolConfig, null, 2));
+
 const client = new BedrockRuntimeClient({
   region: "us-east-1",
 });
-
-log.info("TAI: " + process.env.TAVILY_API_KEY);
-log.info("S3: " + s3BucketNameForSamPackage);
 
 // const modelId = "anthropic.claude-3-haiku-20240307-v1:0"; // work
 const modelId = "anthropic.claude-3-sonnet-20240229-v1:0"; // work
@@ -57,7 +64,7 @@ async function main() {
       }
 
       if (userInput.toLowerCase() === "automode") {
-        await automodeLoop({ cmdRequireConfirm: false });
+        await automodeLoop({ cmdRequireConfirm: true });
       }
 
       await chatWithClaude({ userInput });

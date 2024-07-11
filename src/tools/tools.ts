@@ -206,6 +206,22 @@ export async function fetchAPI(
   }
 }
 
+export async function pexelsSearch(query: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://api.pexels.com/v1/search?${query}&per_page=1`,
+      {
+        headers: {
+          Authorization: process.env.PEXELS_API_KEY ?? "",
+        },
+      }
+    );
+    return JSON.stringify(res);
+  } catch (e: any) {
+    return `Error pexelsSearch: ${JSON.stringify(e)}`;
+  }
+}
+
 export async function execCmd(cmd: string): Promise<string> {
   try {
     const res = await promiseExec(cmd);
@@ -534,6 +550,25 @@ Deleted stacks: You must specify the unique stack ID.
             },
           },
           required: ["url"],
+        },
+      },
+    },
+  },
+  {
+    toolSpec: {
+      name: "pexelsSearch",
+      description:
+        "Search for photos on Pexels. Use this when you need to retrieve photos from the Pexels API.",
+      inputSchema: {
+        json: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "The search query",
+            },
+          },
+          required: ["query"],
         },
       },
     },

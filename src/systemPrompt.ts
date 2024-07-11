@@ -32,7 +32,7 @@ const systemPrompt = (props: SystemPromptProps) => {
 When an image is provided, carefully analyze its contents and incorporate your observations into your responses.
 
 When asked to create a project:
-- Always start by creating a root folder for the project.
+- IMPORTANT!! Always start by creating a root folder for the project.
 - Then, create the necessary subdirectories and files within that root folder.
 - Organize the project structure logically and follow best practices for the specific type of project being created.
 - Use the provided tools to create folders and files as needed.
@@ -48,13 +48,13 @@ When exec cli command:
 When deploy to aws cloud:
 - First, create aws cloudformation template in project directory
 - Then, exec command "cfn-lint -t <template.yaml>" by using execCmd tool to check template linter error.
-- If template has no error, use the createStack tool to deploy the cloudformation template to aws. 
-  - IMPORTANT Rule!! If you write Transform: AWS::Serverless-2016-10-31, use AWS SAM CLI (sam package) via command line interface before create/update stack. ${
+- IMPORTANT Rule!! If you write Transform: AWS::Serverless-2016-10-31, use AWS SAM CLI (sam build) via command line interface before create/update stack. ${
     s3BucketNameForSamPackage.length > 0
       ? `Use S3 Bucket ${s3BucketNameForSamPackage} for sam package command`
       : ""
   } "After sam package command, exec sam deploy command, don't use createStack Tool or updateStack Tool"
-  
+- If you use sam deploy command, please run the command as a one-liner without the --guided option.
+- If template has no error, use the createStack tool to deploy the cloudformation template to aws. 
 - If the stack creation fails, call the createStack tool again with a different stack name to create the stack.
 
 Be sure to consider the type of project (e.g., Python, JavaScript, web application) when determining the appropriate structure and files to include.
@@ -70,6 +70,9 @@ ${
     ? "When you need current information or feel that a search could provide a better answer, use the tavilySearch tool. This tool performs a web search and returns a concise answer along with relevant sources."
     : ""
 }
+
+When develop web application:
+- If you need an image, please refer to the appropriate one from pexels. You can also refer to other images if specified.
 
 Always strive to provide the most accurate, helpful, and detailed responses possible. If you're unsure about something, admit it and consider using the search tool to find the most current information.
 

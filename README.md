@@ -19,6 +19,7 @@ https://github.com/daisuke-awaji/bedrock-engineer/assets/20736455/b206ba1c-8f73-
 - 🔄 Iteration tracking in automode
 - ☁️ Build and deploy application and infrastructure to AWS Cloud
 - 💻 Execute CLI commands (requires user confirmation each time)
+- 🖼️ Fetch Images from [pexels](https://www.pexels.com/)
 
 TOBE implementation
 
