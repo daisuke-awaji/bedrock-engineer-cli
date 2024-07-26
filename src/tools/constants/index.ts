@@ -1,10 +1,10 @@
-import { Capability, StackStatus } from "@aws-sdk/client-cloudformation"
+import { Capability, StackStatus } from "@aws-sdk/client-cloudformation";
 
 export const capabilities: Capability[] = [
   "CAPABILITY_IAM",
   "CAPABILITY_NAMED_IAM",
   "CAPABILITY_AUTO_EXPAND",
-] as const
+] as const;
 
 export const STACK_STATUS: StackStatus[] = [
   "CREATE_IN_PROGRESS",
@@ -30,4 +30,4 @@ export const STACK_STATUS: StackStatus[] = [
   "IMPORT_ROLLBACK_IN_PROGRESS",
   "IMPORT_ROLLBACK_FAILED",
   "IMPORT_ROLLBACK_COMPLETE",
-] as const
+] as const;
