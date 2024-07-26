@@ -562,7 +562,7 @@ Deleted stacks: You must specify the unique stack ID.
   },
 ]
 
-export const executTool = (toolName: string | undefined, toolInput: any) => {
+export const executeTool = (toolName: string | undefined, toolInput: any) => {
   switch (toolName) {
     case "createFolder":
       return createFolder(toolInput["path"])
