@@ -1,5 +1,5 @@
-import * as fs from "fs/promises";
-import { Tool } from "@aws-sdk/client-bedrock-runtime";
+import * as fs from "fs/promises"
+import { Tool } from "@aws-sdk/client-bedrock-runtime"
 import {
   CloudFormationClient,
   CreateStackCommand,
@@ -9,14 +9,16 @@ import {
   Parameter,
   StackStatus,
   UpdateStackCommand,
-} from "@aws-sdk/client-cloudformation";
+} from "@aws-sdk/client-cloudformation"
 // import { CloudWatchLogsClient } from "@aws-sdk/client-cloudwatch-logs";
-import { promisify } from "util";
-import { exec } from "child_process";
-const promiseExec = promisify(exec);
+import { promisify } from "util"
+import { exec } from "child_process"
+import { isStackStatuses } from "./functions"
+import { capabilities, STACK_STATUS } from "./constants"
+const promiseExec = promisify(exec)
 
-const region = "us-east-1";
-const cfn = new CloudFormationClient({ region });
+const region = "us-east-1"
+const cfn = new CloudFormationClient({ region })
 // const cloudwatch = new CloudWatchLogsClient({ region });
 
 export async function createStack(
@@ -29,11 +31,7 @@ export async function createStack(
       TemplateBody: template,
       StackName: stackName,
       Parameters: parameters,
-      Capabilities: [
-        "CAPABILITY_IAM",
-        "CAPABILITY_NAMED_IAM",
-        "CAPABILITY_AUTO_EXPAND",
-      ],
+      Capabilities: capabilities,
       OnFailure: "DELETE",
       Tags: [
         {
@@ -41,11 +39,11 @@ export async function createStack(
           Value: "bedrock-engineer",
         },
       ],
-    });
-    const res = await cfn.send(cmd);
-    return `Stack created: ${stackName}, StackId: ${res.StackId}`;
+    })
+    const res = await cfn.send(cmd)
+    return `Stack created: ${stackName}, StackId: ${res.StackId}`
   } catch (e) {
-    return `Error createStack: ${JSON.stringify(e)}`;
+    return `Error createStack: ${JSON.stringify(e)}`
   }
 }
 
@@ -53,24 +51,24 @@ export async function describeStack(stackName: string): Promise<string> {
   try {
     const cmd = new DescribeStacksCommand({
       StackName: stackName,
-    });
-    const res = await cfn.send(cmd);
-    const stack = res?.Stacks ? res.Stacks[0] : undefined;
-    return JSON.stringify(stack);
+    })
+    const res = await cfn.send(cmd)
+    const stack = res?.Stacks ? res.Stacks[0] : undefined
+    return JSON.stringify(stack)
   } catch (e) {
-    return `Error describeStack: ${JSON.stringify(e)}`;
+    return `Error describeStack: ${JSON.stringify(e)}`
   }
 }
 
 export async function listStacks(stackStatus: string[]): Promise<string> {
   try {
     const cmd = new ListStacksCommand({
-      StackStatusFilter: stackStatus as StackStatus[],
-    });
-    const res = await cfn.send(cmd);
-    return JSON.stringify(res.StackSummaries);
+      StackStatusFilter: isStackStatuses(stackStatus) ? stackStatus : [],
+    })
+    const res = await cfn.send(cmd)
+    return JSON.stringify(res.StackSummaries)
   } catch (e) {
-    return `Error listStacks: ${JSON.stringify(e)}`;
+    return `Error listStacks: ${JSON.stringify(e)}`
   }
 }
 
@@ -78,11 +76,11 @@ export async function describeStackEvents(stackName: string): Promise<string> {
   try {
     const cmd = new DescribeStackEventsCommand({
       StackName: stackName,
-    });
-    const res = await cfn.send(cmd);
-    return JSON.stringify(res.StackEvents);
+    })
+    const res = await cfn.send(cmd)
+    return JSON.stringify(res.StackEvents)
   } catch (e) {
-    return `Error describeStackEvents: ${JSON.stringify(e)}`;
+    return `Error describeStackEvents: ${JSON.stringify(e)}`
   }
 }
 
@@ -96,31 +94,27 @@ export async function updateStack(
       TemplateBody: template,
       StackName: stackName,
       Parameters: parameters,
-      Capabilities: [
-        "CAPABILITY_IAM",
-        "CAPABILITY_NAMED_IAM",
-        "CAPABILITY_AUTO_EXPAND",
-      ],
+      Capabilities: capabilities,
       Tags: [
         {
           Key: "project",
           Value: "bedrock-engineer",
         },
       ],
-    });
-    const res = await cfn.send(cmd);
-    return `Stack updated: ${stackName}, StackId: ${res.StackId}`;
+    })
+    const res = await cfn.send(cmd)
+    return `Stack updated: ${stackName}, StackId: ${res.StackId}`
   } catch (e) {
-    return `Error updateStack: ${JSON.stringify(e)}`;
+    return `Error updateStack: ${JSON.stringify(e)}`
   }
 }
 
 export async function createFolder(folderPath: string): Promise<string> {
   try {
-    await fs.mkdir(folderPath, { recursive: true });
-    return `Folder created: ${folderPath}`;
+    await fs.mkdir(folderPath, { recursive: true })
+    return `Folder created: ${folderPath}`
   } catch (e: any) {
-    return `Error creating folder: ${e.message}`;
+    return `Error creating folder: ${e.message}`
   }
 }
 
@@ -129,10 +123,10 @@ export async function createFile(
   content: string
 ): Promise<string> {
   try {
-    await fs.writeFile(filePath, content);
-    return `File created: ${filePath}`;
+    await fs.writeFile(filePath, content)
+    return `File created: ${filePath}`
   } catch (e: any) {
-    return `Error creating file: ${e.message}`;
+    return `Error creating file: ${e.message}`
   }
 }
 
@@ -141,28 +135,28 @@ export async function writeToFile(
   content: string
 ): Promise<string> {
   try {
-    await fs.writeFile(filePath, content);
-    return `Content written to file: ${filePath}`;
+    await fs.writeFile(filePath, content)
+    return `Content written to file: ${filePath}`
   } catch (e: any) {
-    return `Error writing to file: ${e.message}`;
+    return `Error writing to file: ${e.message}`
   }
 }
 
 export async function readFile(filePath: string): Promise<string> {
   try {
-    const content = await fs.readFile(filePath, "utf-8");
-    return content;
+    const content = await fs.readFile(filePath, "utf-8")
+    return content
   } catch (e: any) {
-    return `Error reading file: ${e.message}`;
+    return `Error reading file: ${e.message}`
   }
 }
 
 export async function listFiles(dirPath = "."): Promise<string> {
   try {
-    const files = await fs.readdir(dirPath);
-    return files.join("\n");
+    const files = await fs.readdir(dirPath)
+    return files.join("\n")
   } catch (e: any) {
-    return `Error listing files: ${e.message}`;
+    return `Error listing files: ${e.message}`
   }
 }
 
@@ -184,12 +178,12 @@ export async function tavilySearch(query: string): Promise<string> {
         include_domains: [],
         exclude_domains: [],
       }),
-    });
+    })
 
-    const body = await response.text();
-    return body;
+    const body = await response.text()
+    return body
   } catch (e: any) {
-    return `Error searching: ${e.message}`;
+    return `Error searching: ${e.message}`
   }
 }
 
@@ -198,11 +192,11 @@ export async function fetchAPI(
   options?: RequestInit
 ): Promise<string> {
   try {
-    const res = await fetch(url, options);
-    const json = await res.json();
-    return JSON.stringify(json);
+    const res = await fetch(url, options)
+    const json = await res.json()
+    return JSON.stringify(json)
   } catch (e: any) {
-    return `Error fetchAPI: ${JSON.stringify(e)}`;
+    return `Error fetchAPI: ${JSON.stringify(e)}`
   }
 }
 
@@ -215,47 +209,21 @@ export async function pexelsSearch(query: string): Promise<string> {
           Authorization: process.env.PEXELS_API_KEY ?? "",
         },
       }
-    );
-    return JSON.stringify(res);
+    )
+    return JSON.stringify(res)
   } catch (e: any) {
-    return `Error pexelsSearch: ${JSON.stringify(e)}`;
+    return `Error pexelsSearch: ${JSON.stringify(e)}`
   }
 }
 
 export async function execCmd(cmd: string): Promise<string> {
   try {
-    const res = await promiseExec(cmd);
-    return JSON.stringify(res);
+    const res = await promiseExec(cmd)
+    return JSON.stringify(res)
   } catch (e: any) {
-    return `Error execCmd: ${JSON.stringify(e)}`;
+    return `Error execCmd: ${JSON.stringify(e)}`
   }
 }
-
-const STACK_STATUS = [
-  "CREATE_IN_PROGRESS",
-  "CREATE_FAILED",
-  "CREATE_COMPLETE",
-  "ROLLBACK_IN_PROGRESS",
-  "ROLLBACK_FAILED",
-  "ROLLBACK_COMPLETE",
-  "DELETE_IN_PROGRESS",
-  "DELETE_FAILED",
-  "DELETE_COMPLETE",
-  "UPDATE_IN_PROGRESS",
-  "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
-  "UPDATE_COMPLETE",
-  "UPDATE_FAILED",
-  "UPDATE_ROLLBACK_IN_PROGRESS",
-  "UPDATE_ROLLBACK_FAILED",
-  "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
-  "UPDATE_ROLLBACK_COMPLETE",
-  "REVIEW_IN_PROGRESS",
-  "IMPORT_IN_PROGRESS",
-  "IMPORT_COMPLETE",
-  "IMPORT_ROLLBACK_IN_PROGRESS",
-  "IMPORT_ROLLBACK_FAILED",
-  "IMPORT_ROLLBACK_COMPLETE",
-];
 
 export const tools: Tool[] = [
   {
@@ -592,45 +560,45 @@ Deleted stacks: You must specify the unique stack ID.
       },
     },
   },
-];
+]
 
 export const executTool = (toolName: string | undefined, toolInput: any) => {
   switch (toolName) {
     case "createFolder":
-      return createFolder(toolInput["path"]);
+      return createFolder(toolInput["path"])
     case "createFile":
-      return createFile(toolInput["path"], toolInput["content"]);
+      return createFile(toolInput["path"], toolInput["content"])
     case "writeToFile":
-      return writeToFile(toolInput["path"], toolInput["content"]);
+      return writeToFile(toolInput["path"], toolInput["content"])
     case "readFile":
-      return readFile(toolInput["path"]);
+      return readFile(toolInput["path"])
     case "listFiles":
-      return listFiles(toolInput["path"]);
+      return listFiles(toolInput["path"])
     case "tavilySearch":
-      return tavilySearch(toolInput["query"]);
+      return tavilySearch(toolInput["query"])
     case "createStack":
       return createStack(
         toolInput["template"],
         toolInput["stackName"],
         toolInput["parameters"]
-      );
+      )
     case "describeStack":
-      return describeStack(toolInput["stackName"]);
+      return describeStack(toolInput["stackName"])
     case "listStacks":
-      return listStacks(toolInput["stackStatus"]);
+      return listStacks(toolInput["stackStatus"])
     case "describeStackEvents":
-      return describeStackEvents(toolInput["stackName"]);
+      return describeStackEvents(toolInput["stackName"])
     case "updateStack":
       return updateStack(
         toolInput["template"],
         toolInput["stackName"],
         toolInput["parameters"]
-      );
+      )
     case "fetchAPI":
-      return fetchAPI(toolInput["url"], toolInput["options"]);
+      return fetchAPI(toolInput["url"], toolInput["options"])
     case "execCmd":
-      return execCmd(toolInput["cmd"]);
+      return execCmd(toolInput["cmd"])
     default:
-      throw new Error(`Unknown tool: ${toolName}`);
+      throw new Error(`Unknown tool: ${toolName}`)
   }
-};
+}
