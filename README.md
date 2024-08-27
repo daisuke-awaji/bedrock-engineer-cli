@@ -1,4 +1,4 @@
-# 🧙 Bedrock Engineer
+# 🧙 Bedrock Engineer (CLI)
 
 Bedrock Engineer is an interactive command-line interface (CLI) to assist with software development tasks. This tool combines the capabilities of a large language model with practical file system operations, web search functionality and build/deploy features of AWS cloud resources.
 
